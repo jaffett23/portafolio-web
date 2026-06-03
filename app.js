@@ -51,7 +51,7 @@ async function enviarEnlace() {
   if (sending || btn.disabled) return;            // <-- bloquea el segundo clic / clic en cooldown
   const email = $('email').value.trim();
   if (!email) { $('login-msg').className = 'msg err'; $('login-msg').textContent = 'Escribe tu correo.'; return; }
-  if (SUPABASE_URL.includes('dyyxoxlwftmzkyspzsam')) {
+  if (SUPABASE_URL.includes('https://dyyxoxlwftmzkyspzsam.supabase.co')) {
     $('login-msg').className = 'msg err';
     $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
     return;
@@ -93,6 +93,19 @@ async function enviarEnlace() {
 $('btn-login').onclick = enviarEnlace;
 // Enter en el campo de correo también envía, con la misma protección
 $('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarEnlace(); });
+$('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+sb.auth.onAuthStateChange((_event, session) => {
+  const logged = !!session;
+  $('login').classList.toggle('hidden', logged);
+  $('app').classList.toggle('hidden', !logged);
+  if (logged) {
+    $('m-email').textContent = session.user.email;
+    loadAll();
+    subscribeRealtime();
+  }
+});
+
 
 /* ---------- navegación por pestañas ---------- */
 $('tabs').addEventListener('click', (e) => {
