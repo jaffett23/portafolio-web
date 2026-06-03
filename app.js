@@ -5,8 +5,8 @@
    La anon key es SEGURA en el navegador: tus datos están protegidos por RLS.
    NUNCA pongas aquí la service role ni las API keys de precios.
    ========================================================================= */
-const SUPABASE_URL      = ''https://dyyxoxlwftmzkyspzsam.supabase.co'';   // <-- CAMBIAR
-const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal';            // <-- CAMBIAR
+const SUPABASE_URL      = 'https://dyyxoxlwftmzkyspzsam.supabase.co';  
+const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'; 
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $  = (id) => document.getElementById(id);
