@@ -9,7 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 
 const SUPABASE_URL      = 'https://dyyxoxlwftmzkyspzsam.supabase.co';  
-const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'; 
+const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $  = (id) => document.getElementById(id);
@@ -23,7 +23,7 @@ const qty   = (n) => (n == null ? '—' : Number(n).toLocaleString('es-MX', { ma
 const dmy   = (s) => (s ? new Date(s + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 const signClass = (n) => (Number(n) > 0 ? 'pos' : Number(n) < 0 ? 'neg' : '');
 
-/* ---------- auth: enviar enlace mágico con anti-doble-clic + cooldown ---------- */
+/* ---------- auth ---------- */
 let sending = false;
 let cooldownTimer = null;
 const LOGIN_LABEL = $('btn-login').textContent || 'Enviar enlace mágico';
@@ -48,10 +48,10 @@ function setCooldown(seconds) {
 
 async function enviarEnlace() {
   const btn = $('btn-login');
-  if (sending || btn.disabled) return;            // <-- bloquea el segundo clic / clic en cooldown
+  if (sending || btn.disabled) return;            // bloquea el segundo clic / clic en cooldown
   const email = $('email').value.trim();
   if (!email) { $('login-msg').className = 'msg err'; $('login-msg').textContent = 'Escribe tu correo.'; return; }
-  if (SUPABASE_URL.includes('https://dyyxoxlwftmzkyspzsam.supabase.co')) {
+  if (SUPABASE_URL.includes('dyyxoxlwftmzkyspzsam')) {
     $('login-msg').className = 'msg err';
     $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
     return;
@@ -68,7 +68,6 @@ async function enviarEnlace() {
     if (error) {
       $('login-msg').className = 'msg err';
       $('login-msg').textContent = error.message;
-      // Si fue por límite de intentos, mantén el enfriamiento; si no, reactiva para corregir el correo.
       if (error.status === 429 || /rate|too many|seconds|segundos/i.test(error.message)) {
         setCooldown(60);
       } else {
@@ -91,7 +90,6 @@ async function enviarEnlace() {
 }
 
 $('btn-login').onclick = enviarEnlace;
-// Enter en el campo de correo también envía, con la misma protección
 $('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarEnlace(); });
 $('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
@@ -105,7 +103,6 @@ sb.auth.onAuthStateChange((_event, session) => {
     subscribeRealtime();
   }
 });
-
 
 /* ---------- navegación por pestañas ---------- */
 $('tabs').addEventListener('click', (e) => {
