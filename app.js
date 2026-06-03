@@ -1,7 +1,7 @@
 // La anon/publishable key es SEGURA en el navegador porque RLS protege tus datos.
 const sb = supabase.createClient(
-  'https://<tu-proyecto>.supabase.co',
-  '<ANON_O_PUBLISHABLE_KEY>'
+  'https://dyyxoxlwftmzkyspzsam.supabase.co',
+  'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'
 )
 
 const $ = (id) => document.getElementById(id)
