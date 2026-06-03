@@ -23,31 +23,76 @@ const qty   = (n) => (n == null ? '—' : Number(n).toLocaleString('es-MX', { ma
 const dmy   = (s) => (s ? new Date(s + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 const signClass = (n) => (Number(n) > 0 ? 'pos' : Number(n) < 0 ? 'neg' : '');
 
-/* ---------- auth ---------- */
-$('btn-login').onclick = async () => {
+/* ---------- auth: enviar enlace mágico con anti-doble-clic + cooldown ---------- */
+let sending = false;
+let cooldownTimer = null;
+const LOGIN_LABEL = $('btn-login').textContent || 'Enviar enlace mágico';
+
+function setCooldown(seconds) {
+  const btn = $('btn-login');
+  let left = seconds;
+  btn.disabled = true;
+  btn.textContent = `Reintentar en ${left} s`;
+  clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(cooldownTimer);
+      btn.disabled = false;
+      btn.textContent = LOGIN_LABEL;
+    } else {
+      btn.textContent = `Reintentar en ${left} s`;
+    }
+  }, 1000);
+}
+
+async function enviarEnlace() {
+  const btn = $('btn-login');
+  if (sending || btn.disabled) return;            // <-- bloquea el segundo clic / clic en cooldown
   const email = $('email').value.trim();
-  if (!email) { $('login-msg').textContent = 'Escribe tu correo.'; return; }
+  if (!email) { $('login-msg').className = 'msg err'; $('login-msg').textContent = 'Escribe tu correo.'; return; }
   if (SUPABASE_URL.includes('<tu-proyecto>')) {
     $('login-msg').className = 'msg err';
     $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
     return;
   }
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
-  $('login-msg').className = error ? 'msg err' : 'msg';
-  $('login-msg').textContent = error ? error.message : 'Listo: revisa tu correo y abre el enlace mágico.';
-};
-$('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
-sb.auth.onAuthStateChange((_event, session) => {
-  const logged = !!session;
-  $('login').classList.toggle('hidden', logged);
-  $('app').classList.toggle('hidden', !logged);
-  if (logged) {
-    $('m-email').textContent = session.user.email;
-    loadAll();
-    subscribeRealtime();
+  sending = true;
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  $('login-msg').className = 'msg';
+  $('login-msg').textContent = '';
+
+  try {
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
+    if (error) {
+      $('login-msg').className = 'msg err';
+      $('login-msg').textContent = error.message;
+      // Si fue por límite de intentos, mantén el enfriamiento; si no, reactiva para corregir el correo.
+      if (error.status === 429 || /rate|too many|seconds|segundos/i.test(error.message)) {
+        setCooldown(60);
+      } else {
+        btn.disabled = false;
+        btn.textContent = LOGIN_LABEL;
+      }
+    } else {
+      $('login-msg').className = 'msg';
+      $('login-msg').textContent = 'Listo: revisa tu correo y abre el enlace mágico.';
+      setCooldown(60);                              // Supabase limita reenvíos ~60 s
+    }
+  } catch (e) {
+    $('login-msg').className = 'msg err';
+    $('login-msg').textContent = e.message || 'Error de red. Intenta de nuevo.';
+    btn.disabled = false;
+    btn.textContent = LOGIN_LABEL;
+  } finally {
+    sending = false;
   }
-});
+}
+
+$('btn-login').onclick = enviarEnlace;
+// Enter en el campo de correo también envía, con la misma protección
+$('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarEnlace(); });
 
 /* ---------- navegación por pestañas ---------- */
 $('tabs').addEventListener('click', (e) => {
