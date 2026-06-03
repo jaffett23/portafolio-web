@@ -53,6 +53,7 @@ button{
   padding:11px 16px; background:var(--navy); color:#fff; transition:transform .08s, background .15s, box-shadow .15s;
 }
 button:hover{background:var(--navy-deep); box-shadow:var(--shadow-sm)}
+button:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; transform:none }
 button:active{transform:translateY(1px)}
 button.ghost{background:transparent; color:var(--navy); border:1px solid var(--line)}
 button.ghost:hover{background:var(--sand)}
