@@ -1,33 +1,59 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portafolio</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-  <!-- Login -->
-  <section id="login">
-    <h2>Entrar</h2>
-    <input id="email" type="email" placeholder="tu@correo.com" />
-    <button id="btn-login">Enviar enlace mágico</button>
-    <p id="login-msg"></p>
-  </section>
+// La anon/publishable key es SEGURA en el navegador porque RLS protege tus datos.
+const sb = supabase.createClient(
+  'https://<tu-proyecto>.supabase.co',
+  '<ANON_O_PUBLISHABLE_KEY>'
+)
 
-  <!-- App (oculta hasta iniciar sesión) -->
-  <section id="app" hidden>
-    <header><h1>Mi portafolio</h1><button id="btn-logout">Salir</button></header>
-    <div id="kpis"></div>
-    <canvas id="chart-sector" height="120"></canvas>
-    <h2>Watchlist</h2>
-    <table id="tabla-watchlist"><thead><tr>
-      <th>Ticker</th><th>Precio</th><th>Referencia</th><th>Señal</th>
-    </tr></thead><tbody></tbody></table>
-  </section>
+const $ = (id) => document.getElementById(id)
 
-  <script src="app.js"></script>
-</body>
-</html>
+// --- Login con enlace mágico ---
+$('btn-login').onclick = async () => {
+  const email = $('email').value
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin }
+  })
+  $('login-msg').textContent = error ? error.message : 'Revisa tu correo y abre el enlace.'
+}
+$('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload() }
+
+// --- Reacciona a la sesión ---
+sb.auth.onAuthStateChange((_e, session) => {
+  const logged = !!session
+  $('login').hidden = logged
+  $('app').hidden = !logged
+  if (logged) cargarDatos()
+})
+
+async function cargarDatos() {
+  // KPIs desde la vista v_pnl
+  const { data: pnl } = await sb.from('v_pnl').select('*').single()
+  if (pnl) $('kpis').innerHTML = `
+    <div>Valor (USD): <b>$${(pnl.valor_usd ?? 0).toFixed(2)}</b></div>
+    <div>Valor (MXN): <b>$${(pnl.valor_mxn ?? 0).toFixed(2)}</b></div>
+    <div>No realizado (USD): <b>$${(pnl.no_realizado_usd ?? 0).toFixed(2)}</b></div>`
+
+  // Tabla de señales
+  const { data: sig } = await sb.from('v_signals').select('*').order('ticker')
+  const tb = $('tabla-watchlist').querySelector('tbody')
+  tb.innerHTML = (sig ?? []).map(s => `
+    <tr><td>${s.ticker}</td><td>$${(s.price ?? 0).toFixed(2)}</td>
+        <td>$${(s.reference ?? 0).toFixed(2)}</td><td>${s.signal}</td></tr>`).join('')
+
+  // Gráfica de exposición por sector (suma valor por sector con una consulta sencilla)
+  const { data: pos } = await sb.from('positions').select('ticker, quantity')
+  // (para producción, expón una vista v_exposure; aquí va un ejemplo simple)
+  renderChart(sig)
+}
+
+let chart
+function renderChart(rows) {
+  const ctx = $('chart-sector')
+  const bySector = {}
+  for (const r of rows ?? []) bySector[r.sector] = (bySector[r.sector] ?? 0) + (r.price ?? 0)
+  if (chart) chart.destroy()
+  chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: Object.keys(bySector), datasets: [{ data: Object.values(bySector) }] }
+  })
+}
