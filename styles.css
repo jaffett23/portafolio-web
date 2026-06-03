@@ -15,8 +15,6 @@
   --sans:'Hanken Grotesk', system-ui, sans-serif;
 }
 
-import { Analytics } from "@vercel/analytics/next"
-
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
