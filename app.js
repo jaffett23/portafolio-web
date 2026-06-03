@@ -1,14 +1,8 @@
 /* =========================================================================
-   Portafolio — lógica del front-end
-   1) Pega tu Project URL y tu anon/publishable key abajo.
-   2) Sube los 3 archivos (index.html, styles.css, app.js) a tu hosting.
-   La anon key es SEGURA en el navegador: tus datos están protegidos por RLS.
-   NUNCA pongas aquí la service role ni las API keys de precios.
+   Portafolio — lógica del tablero (app.html).
+   SUPABASE_URL, SUPABASE_ANON_KEY y `sb` se definen en config.js,
+   que se carga ANTES de este archivo. Aquí no se redeclaran.
    ========================================================================= */
-const SUPABASE_URL      = 'https://dyyxoxlwftmzkyspzsam.supabase.co';  
-const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'; 
-
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $  = (id) => document.getElementById(id);
 const PALETTE = ['#1F3A5F','#2E7D6F','#B7791F','#9C6B3F','#3E9486','#6B7FA3','#C2A878','#4A6FA5','#8FA37E','#7A776E'];
 
@@ -20,26 +14,34 @@ const qty   = (n) => (n == null ? '—' : Number(n).toLocaleString('es-MX', { ma
 const dmy   = (s) => (s ? new Date(s + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
 const signClass = (n) => (Number(n) > 0 ? 'pos' : Number(n) < 0 ? 'neg' : '');
 
-/* ---------- auth ---------- */
-$('btn-login').onclick = async () => {
-  const email = $('email').value.trim();
-  if (!email) { $('login-msg').textContent = 'Escribe tu correo.'; return; }
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
-  $('login-msg').className = error ? 'msg err' : 'msg';
-  $('login-msg').textContent = error ? error.message : 'Listo: revisa tu correo y abre el enlace mágico.';
-};
-$('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+/* ---------- sesión + rol (guardia de acceso) ---------- */
+let userRole = 'viewer';
 
-sb.auth.onAuthStateChange((_event, session) => {
-  const logged = !!session;
-  $('login').classList.toggle('hidden', logged);
-  $('app').classList.toggle('hidden', !logged);
-  if (logged) {
-    $('m-email').textContent = session.user.email;
-    loadAll();
-    subscribeRealtime();
-  }
-});
+async function initSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { location.replace('auth.html'); return; }    // sin sesión → página de acceso
+  $('m-email').textContent = session.user.email;
+  const { data: prof } = await sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+  userRole = (prof && prof.role) || 'viewer';
+  applyRole(userRole);
+  loadAll();
+  subscribeRealtime();
+}
+
+function applyRole(role) {
+  const admin = role === 'admin';
+  const badge = $('m-role');
+  if (badge) { badge.textContent = admin ? 'Administrador' : 'Solo lectura'; badge.className = 'role-badge ' + (admin ? 'role-admin' : 'role-viewer'); }
+  // modo viewer: oculta formularios de edición y desactiva los botones de guardar/agregar
+  ['form-trade', 'form-cash'].forEach(id => { const el = $(id); if (el) el.style.display = admin ? '' : 'none'; });
+  ['btn-add-trade', 'btn-add-cash', 'btn-save-settings', 'btn-save-ret'].forEach(id => { const el = $(id); if (el) el.disabled = !admin; });
+  const note = $('ro-note'); if (note) note.style.display = admin ? 'none' : '';
+}
+
+$('btn-logout').onclick = async () => { await sb.auth.signOut(); location.replace('index.html'); };
+sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') location.replace('index.html'); });
+
+initSession();
 
 /* ---------- navegación por pestañas ---------- */
 $('tabs').addEventListener('click', (e) => {
