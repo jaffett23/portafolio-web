@@ -5,11 +5,8 @@
    La anon key es SEGURA en el navegador: tus datos están protegidos por RLS.
    NUNCA pongas aquí la service role ni las API keys de precios.
    ========================================================================= */
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from "@vercel/analytics/next"
-
 const SUPABASE_URL      = 'https://dyyxoxlwftmzkyspzsam.supabase.co';  
-const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal';
+const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'; 
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $  = (id) => document.getElementById(id);
@@ -24,73 +21,18 @@ const dmy   = (s) => (s ? new Date(s + 'T00:00:00').toLocaleDateString('es-MX', 
 const signClass = (n) => (Number(n) > 0 ? 'pos' : Number(n) < 0 ? 'neg' : '');
 
 /* ---------- auth ---------- */
-let sending = false;
-let cooldownTimer = null;
-const LOGIN_LABEL = $('btn-login').textContent || 'Enviar enlace mágico';
-
-function setCooldown(seconds) {
-  const btn = $('btn-login');
-  let left = seconds;
-  btn.disabled = true;
-  btn.textContent = `Reintentar en ${left} s`;
-  clearInterval(cooldownTimer);
-  cooldownTimer = setInterval(() => {
-    left -= 1;
-    if (left <= 0) {
-      clearInterval(cooldownTimer);
-      btn.disabled = false;
-      btn.textContent = LOGIN_LABEL;
-    } else {
-      btn.textContent = `Reintentar en ${left} s`;
-    }
-  }, 1000);
-}
-
-async function enviarEnlace() {
-  const btn = $('btn-login');
-  if (sending || btn.disabled) return;            // bloquea el segundo clic / clic en cooldown
+$('btn-login').onclick = async () => {
   const email = $('email').value.trim();
-  if (!email) { $('login-msg').className = 'msg err'; $('login-msg').textContent = 'Escribe tu correo.'; return; }
+  if (!email) { $('login-msg').textContent = 'Escribe tu correo.'; return; }
   if (SUPABASE_URL.includes('dyyxoxlwftmzkyspzsam')) {
     $('login-msg').className = 'msg err';
     $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
     return;
   }
-
-  sending = true;
-  btn.disabled = true;
-  btn.textContent = 'Enviando…';
-  $('login-msg').className = 'msg';
-  $('login-msg').textContent = '';
-
-  try {
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
-    if (error) {
-      $('login-msg').className = 'msg err';
-      $('login-msg').textContent = error.message;
-      if (error.status === 429 || /rate|too many|seconds|segundos/i.test(error.message)) {
-        setCooldown(60);
-      } else {
-        btn.disabled = false;
-        btn.textContent = LOGIN_LABEL;
-      }
-    } else {
-      $('login-msg').className = 'msg';
-      $('login-msg').textContent = 'Listo: revisa tu correo y abre el enlace mágico.';
-      setCooldown(60);                              // Supabase limita reenvíos ~60 s
-    }
-  } catch (e) {
-    $('login-msg').className = 'msg err';
-    $('login-msg').textContent = e.message || 'Error de red. Intenta de nuevo.';
-    btn.disabled = false;
-    btn.textContent = LOGIN_LABEL;
-  } finally {
-    sending = false;
-  }
-}
-
-$('btn-login').onclick = enviarEnlace;
-$('email').addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarEnlace(); });
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
+  $('login-msg').className = error ? 'msg err' : 'msg';
+  $('login-msg').textContent = error ? error.message : 'Listo: revisa tu correo y abre el enlace mágico.';
+};
 $('btn-logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
 sb.auth.onAuthStateChange((_event, session) => {
