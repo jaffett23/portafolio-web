@@ -5,6 +5,9 @@
    La anon key es SEGURA en el navegador: tus datos están protegidos por RLS.
    NUNCA pongas aquí la service role ni las API keys de precios.
    ========================================================================= */
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
+
 const SUPABASE_URL      = 'https://dyyxoxlwftmzkyspzsam.supabase.co';  
 const SUPABASE_ANON_KEY = 'sb_publishable_aZ_W9PEjHAuYC9ldC6692A_qi-_pAal'; 
 
