@@ -3,160 +3,64 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mi portafolio</title>
+  <title>Acceso • Portafolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
-  <div id="app">
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="logo">Portafolio<span class="dot">•</span></div>
-        <div class="top-meta">
-          <span>FX spot <b id="m-fx" class="num">—</b></span>
-          <span>Valor <b id="m-val" class="num">—</b></span>
-          <span id="m-role" class="role-badge">—</span>
-          <span id="m-email" class="muted"></span>
-          <a href="index.html" class="ghost-link">Inicio</a>
-          <button class="ghost" id="btn-logout" style="padding:7px 12px">Salir</button>
-        </div>
+  <div class="login-wrap">
+    <a href="index.html" class="auth-back">← Volver al inicio</a>
+    <div class="login-card">
+      <div class="brand muted">Portafolio<span style="color:var(--teal)">•</span></div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-pane="login" type="button">Iniciar sesión</button>
+        <button class="auth-tab" data-pane="register" type="button">Crear cuenta</button>
       </div>
-      <nav class="tabs" id="tabs">
-        <button class="tab active" data-view="resumen">Resumen</button>
-        <button class="tab" data-view="posiciones">Posiciones</button>
-        <button class="tab" data-view="watchlist">Watchlist</button>
-        <button class="tab" data-view="dividendos">Dividendos</button>
-        <button class="tab" data-view="operaciones">Operaciones</button>
-        <button class="tab" data-view="efectivo">Efectivo y ajustes</button>
-      </nav>
+
+      <!-- LOGIN -->
+      <form id="pane-login">
+        <div class="auth-row"><label for="li-email">Correo</label>
+          <input id="li-email" type="email" autocomplete="email" placeholder="tu@correo.com" required /></div>
+        <div class="auth-row"><label for="li-pass">Contraseña</label>
+          <input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••" required /></div>
+        <button id="btn-login" type="submit" style="width:100%">Entrar</button>
+        <div style="margin-top:10px"><button class="link-muted" id="btn-forgot" type="button">¿Olvidaste tu contraseña?</button></div>
+        <p id="login-msg" class="msg"></p>
+      </form>
+
+      <!-- REGISTRO -->
+      <form id="pane-register" class="hidden">
+        <div class="auth-row"><label for="rg-name">Nombre</label>
+          <input id="rg-name" type="text" autocomplete="name" placeholder="Tu nombre" /></div>
+        <div class="auth-row"><label for="rg-email">Correo</label>
+          <input id="rg-email" type="email" autocomplete="email" placeholder="tu@correo.com" required /></div>
+        <div class="auth-row"><label for="rg-pass">Contraseña (mín. 6 caracteres)</label>
+          <input id="rg-pass" type="password" autocomplete="new-password" placeholder="••••••••" required /></div>
+        <div class="auth-row"><label for="rg-pass2">Repite la contraseña</label>
+          <input id="rg-pass2" type="password" autocomplete="new-password" placeholder="••••••••" required /></div>
+        <button id="btn-register" type="submit" class="teal" style="width:100%">Crear cuenta</button>
+        <p id="register-msg" class="msg"></p>
+      </form>
+
+      <!-- NUEVA CONTRASEÑA (recuperación) -->
+      <form id="pane-recovery" class="hidden">
+        <p class="section-sub" style="margin:0 0 14px">Define tu nueva contraseña.</p>
+        <div class="auth-row"><label for="rc-pass">Nueva contraseña (mín. 6 caracteres)</label>
+          <input id="rc-pass" type="password" autocomplete="new-password" placeholder="••••••••" required /></div>
+        <button id="btn-recovery" type="submit" style="width:100%">Guardar contraseña</button>
+        <p id="recovery-msg" class="msg"></p>
+      </form>
     </div>
-
-    <main>
-      <div id="ro-note" class="alert-banner" style="display:none">Estás en modo <b>solo lectura</b>: puedes consultar todo, pero no editar. Pide a un administrador que te cambie el rol si necesitas editar.</div>
-
-      <!-- RESUMEN -->
-      <section id="v-resumen" class="view">
-        <h2 class="section-title">Resumen del portafolio</h2>
-        <div id="alertas"></div>
-        <div class="kpi-grid" id="kpis"></div>
-        <div class="panel-grid">
-          <div class="panel"><h3>Exposición por sector</h3><div class="chart-box"><canvas id="chart-sector"></canvas></div></div>
-          <div class="panel"><h3>Crecimiento vs. defensivo</h3><div class="chart-box"><canvas id="chart-bucket"></canvas></div></div>
-        </div>
-      </section>
-
-      <!-- POSICIONES -->
-      <section id="v-posiciones" class="view hidden">
-        <h2 class="section-title">Posiciones actuales</h2>
-        <p class="section-sub">Valor, P&L, peso, stop y riesgo se calculan en vivo con el precio más reciente.</p>
-        <div class="table-card"><div class="table-scroll"><table id="t-pos">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="l">Nombre</th><th class="c">Tipo</th><th class="c">Plat.</th>
-            <th class="l">Sector</th><th>Cantidad</th><th>Precio prom</th><th>Precio</th><th>Valor</th>
-            <th>G/P USD</th><th>G/P %</th><th>Peso</th><th>Stop</th><th>Riesgo USD</th><th class="c">Alerta</th>
-          </tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
-
-      <!-- WATCHLIST -->
-      <section id="v-watchlist" class="view hidden">
-        <h2 class="section-title">Lista de vigilancia</h2>
-        <p class="section-sub">La señal se calcula sola: precio vs. promedio móvil y bandas por sector.</p>
-        <div class="table-card"><div class="table-scroll"><table id="t-wl">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="l">Nombre</th><th class="l">Sector</th><th class="c">En cartera</th>
-            <th>Precio</th><th>Referencia</th><th>Var.</th><th>Compra mín</th><th>Compra máx</th>
-            <th>Objetivo</th><th class="c">Señal</th><th class="l">Prioridad</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table></div></div>
-      </section>
-
-      <!-- DIVIDENDOS -->
-      <section id="v-dividendos" class="view hidden">
-        <h2 class="section-title">Dividendos estimados (anualizados)</h2>
-        <div class="toolbar">
-          <div class="f sm"><label>Ret. EE.UU.</label><input id="s-us" type="number" step="0.01" /></div>
-          <div class="f sm"><label>Ret. México</label><input id="s-mx" type="number" step="0.01" /></div>
-          <div class="f sm" style="align-self:end"><button class="teal" id="btn-save-ret">Guardar tasas</button></div>
-          <div class="note" style="flex:1">Neto ≈ bruto × (1 − EE.UU. − México). Filas “verificar” = distribución variable por confirmar.</div>
-        </div>
-        <div class="table-card"><div class="table-scroll"><table id="t-div">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="c">Plat.</th><th>Cantidad</th><th class="c">Paga</th>
-            <th class="c">Frecuencia</th><th>Div anual/acción</th><th>Bruto anual</th>
-            <th>Ret. EE.UU.</th><th>Ret. México</th><th>Neto anual</th><th class="l">Fuente</th>
-          </tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
-
-      <!-- OPERACIONES -->
-      <section id="v-operaciones" class="view hidden">
-        <h2 class="section-title">Operaciones</h2>
-        <div class="toolbar" id="form-trade">
-          <div class="f sm"><label>Fecha</label><input id="tr-date" type="date" /></div>
-          <div class="f sm"><label>Operación</label><select id="tr-side"><option>COMPRA</option><option>VENTA</option></select></div>
-          <div class="f sm"><label>Plataforma</label><select id="tr-plat"><option>GBM</option><option>ARQ</option></select></div>
-          <div class="f sm"><label>Ticker</label><input id="tr-ticker" placeholder="KO" /></div>
-          <div class="f sm"><label>Cantidad</label><input id="tr-qty" type="number" step="0.000001" /></div>
-          <div class="f sm"><label>Precio</label><input id="tr-price" type="number" step="0.01" /></div>
-          <div class="f sm"><label>Comisión</label><input id="tr-comm" type="number" step="0.01" value="0" /></div>
-          <div class="f sm" style="align-self:end"><button id="btn-add-trade">Agregar</button></div>
-        </div>
-        <p id="trade-msg" class="msg"></p>
-        <div class="kpi-grid" id="ops-kpis" style="margin-bottom:18px"></div>
-        <div class="table-card"><div class="table-scroll"><table id="t-ops">
-          <thead><tr>
-            <th class="l">Fecha</th><th class="c">Operación</th><th class="c">Plat.</th><th class="l">Ticker</th>
-            <th>Cantidad</th><th>Precio</th><th>Comisión</th><th>Total</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table></div></div>
-      </section>
-
-      <!-- EFECTIVO Y AJUSTES -->
-      <section id="v-efectivo" class="view hidden">
-        <h2 class="section-title">Efectivo y ajustes</h2>
-        <div class="panel" style="margin-bottom:18px">
-          <h3>Parámetros</h3>
-          <div class="form-grid">
-            <div class="f"><label>Tipo de cambio spot (USD/MXN)</label><input id="p-fx" type="number" step="0.0001" /></div>
-            <div class="f"><label>FX promedio de compra</label><input id="p-fxavg" type="number" step="0.0001" /></div>
-            <div class="f"><label>Efectivo disponible (USD)</label><input id="p-cash" type="number" step="0.01" /></div>
-            <div class="f"><label>Ventana promedio móvil (sesiones)</label><input id="p-ma" type="number" step="1" /></div>
-            <div class="f"><label>Límite de riesgo objetivo</label><input id="p-risk" type="number" step="0.01" /></div>
-          </div>
-          <div style="margin-top:14px"><button class="teal" id="btn-save-settings">Guardar parámetros</button> <span id="settings-msg" class="msg"></span></div>
-          <p class="note">El FX spot es el único tipo de cambio que convierte USD↔MXN en todo el tablero. La ventana del promedio móvil define la referencia automática de la watchlist.</p>
-        </div>
-
-        <div class="kpi-grid" id="cash-kpis"></div>
-
-        <div class="toolbar" id="form-cash">
-          <div class="f sm"><label>Fecha</label><input id="cf-date" type="date" /></div>
-          <div class="f sm"><label>Plataforma</label><select id="cf-plat"><option>GBM</option><option>ARQ</option></select></div>
-          <div class="f sm"><label>Concepto</label><select id="cf-kind"><option>Ingreso</option><option>Retiro</option></select></div>
-          <div class="f sm"><label>Monto (MXN)</label><input id="cf-amt" type="number" step="0.01" /></div>
-          <div class="f sm" style="align-self:end"><button id="btn-add-cash">Agregar movimiento</button></div>
-        </div>
-        <div class="table-card"><div class="table-scroll"><table id="t-cash">
-          <thead><tr><th class="l">Fecha</th><th class="c">Plataforma</th><th class="c">Concepto</th><th>Monto (MXN)</th></tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
-    </main>
-    <footer>Datos privados protegidos por Row Level Security · Precios y tipo de cambio actualizados automáticamente por el job programado.</footer>
   </div>
 
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
