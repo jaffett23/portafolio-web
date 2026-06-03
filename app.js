@@ -24,11 +24,6 @@ const signClass = (n) => (Number(n) > 0 ? 'pos' : Number(n) < 0 ? 'neg' : '');
 $('btn-login').onclick = async () => {
   const email = $('email').value.trim();
   if (!email) { $('login-msg').textContent = 'Escribe tu correo.'; return; }
-  if (SUPABASE_URL.includes('dyyxoxlwftmzkyspzsam')) {
-    $('login-msg').className = 'msg err';
-    $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
-    return;
-  }
   const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } });
   $('login-msg').className = error ? 'msg err' : 'msg';
   $('login-msg').textContent = error ? error.message : 'Listo: revisa tu correo y abre el enlace mágico.';
