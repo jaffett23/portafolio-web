@@ -51,7 +51,7 @@ async function enviarEnlace() {
   if (sending || btn.disabled) return;            // <-- bloquea el segundo clic / clic en cooldown
   const email = $('email').value.trim();
   if (!email) { $('login-msg').className = 'msg err'; $('login-msg').textContent = 'Escribe tu correo.'; return; }
-  if (SUPABASE_URL.includes('<tu-proyecto>')) {
+  if (SUPABASE_URL.includes('dyyxoxlwftmzkyspzsam')) {
     $('login-msg').className = 'msg err';
     $('login-msg').textContent = 'Falta configurar SUPABASE_URL y la anon key en app.js.';
     return;
