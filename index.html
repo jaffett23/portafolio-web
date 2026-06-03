@@ -3,172 +3,99 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portafolio de inversiones</title>
+  <title>Portafolio • Panorama de mercado</title>
+  <meta name="description" content="Resumen mensual del mercado y acceso a tu portafolio de inversiones." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
 
-  <!-- ============ LOGIN ============ -->
-  <div id="login" class="login-wrap">
-    <div class="login-card">
-      <div class="brand muted">Portafolio<span style="color:var(--teal)">•</span></div>
-      <h1>Entra a tu portafolio</h1>
-      <p class="sub">Te enviamos un enlace mágico a tu correo. Sin contraseñas.</p>
-      <label for="email">Correo</label>
-      <input id="email" type="email" placeholder="tu@correo.com" autocomplete="email" />
-      <div style="height:12px"></div>
-      <button id="btn-login" style="width:100%">Enviar enlace mágico</button>
-      <p id="login-msg" class="msg"></p>
-    </div>
-  </div>
-
-  <!-- ============ APP ============ -->
-  <div id="app" class="hidden">
-    <div class="topbar">
-      <div class="topbar-inner">
-        <div class="logo">Portafolio<span class="dot">•</span></div>
-        <div class="top-meta">
-          <span>FX spot <b id="m-fx" class="num">—</b></span>
-          <span>Valor <b id="m-val" class="num">—</b></span>
-          <span id="m-email"></span>
-          <button class="ghost" id="btn-logout" style="padding:7px 12px">Salir</button>
-        </div>
+  <!-- ===== NAV con scroll ===== -->
+  <nav class="lp-nav">
+    <div class="lp-nav-inner">
+      <a href="#inicio" class="lp-logo">Portafolio<span class="dot">•</span></a>
+      <button class="lp-burger" id="burger" aria-label="Menú">☰</button>
+      <div class="lp-links" id="lp-links">
+        <a href="#inicio">Inicio</a>
+        <a href="#mercado">Mercado</a>
+        <a href="#destacados">Destacados</a>
+        <a href="#acerca">Acerca</a>
+        <a href="#contacto">Contacto</a>
       </div>
-      <nav class="tabs" id="tabs">
-        <button class="tab active" data-view="resumen">Resumen</button>
-        <button class="tab" data-view="posiciones">Posiciones</button>
-        <button class="tab" data-view="watchlist">Watchlist</button>
-        <button class="tab" data-view="dividendos">Dividendos</button>
-        <button class="tab" data-view="operaciones">Operaciones</button>
-        <button class="tab" data-view="efectivo">Efectivo y ajustes</button>
-      </nav>
+      <div class="lp-cta">
+        <a href="auth.html" class="btn-login-nav" id="btn-acceso">Iniciar sesión</a>
+      </div>
     </div>
+  </nav>
 
-    <main>
-      <!-- RESUMEN -->
-      <section id="v-resumen" class="view">
-        <h2 class="section-title">Resumen del portafolio</h2>
-        <div id="alertas"></div>
-        <div class="kpi-grid" id="kpis"></div>
-        <div class="panel-grid">
-          <div class="panel"><h3>Exposición por sector</h3><div class="chart-box"><canvas id="chart-sector"></canvas></div></div>
-          <div class="panel"><h3>Crecimiento vs. defensivo</h3><div class="chart-box"><canvas id="chart-bucket"></canvas></div></div>
-        </div>
-      </section>
+  <!-- ===== HERO ===== -->
+  <header id="inicio" class="lp-hero">
+    <div class="eyebrow">Panorama de mercado</div>
+    <h1>Tus inversiones, con contexto</h1>
+    <p>Un resumen mensual de lo que movió a los mercados y acceso directo a tu portafolio personal: posiciones, señales de compra y dividendos, en un solo lugar.</p>
+    <div class="hero-actions">
+      <a href="auth.html" class="btn-primary">Entrar a mi portafolio</a>
+      <a href="#mercado" class="btn-secondary">Ver el mercado</a>
+    </div>
+  </header>
 
-      <!-- POSICIONES -->
-      <section id="v-posiciones" class="view hidden">
-        <h2 class="section-title">Posiciones actuales</h2>
-        <p class="section-sub">Valor, P&L, peso, stop y riesgo se calculan en vivo con el precio más reciente.</p>
-        <div class="table-card"><div class="table-scroll"><table id="t-pos">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="l">Nombre</th><th class="c">Tipo</th><th class="c">Plat.</th>
-            <th class="l">Sector</th><th>Cantidad</th><th>Precio prom</th><th>Precio</th><th>Valor</th>
-            <th>G/P USD</th><th>G/P %</th><th>Peso</th><th>Stop</th><th>Riesgo USD</th><th class="c">Alerta</th>
-          </tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
+  <!-- ===== MERCADO (noticias del mes) ===== -->
+  <section id="mercado" class="lp-section">
+    <h2>Resumen del mercado <span class="lp-month-tag" id="mes-tag">— mes</span></h2>
+    <p class="lead" id="mes-lead">Lo más relevante del mes anterior. Se actualiza una vez al mes.</p>
+    <div class="lp-highlights" id="highlights"></div>
+    <div style="height:22px"></div>
+    <div class="news-grid" id="news-grid"></div>
+  </section>
 
-      <!-- WATCHLIST -->
-      <section id="v-watchlist" class="view hidden">
-        <h2 class="section-title">Lista de vigilancia</h2>
-        <p class="section-sub">La señal se calcula sola: precio vs. promedio móvil y bandas por sector.</p>
-        <div class="table-card"><div class="table-scroll"><table id="t-wl">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="l">Nombre</th><th class="l">Sector</th><th class="c">En cartera</th>
-            <th>Precio</th><th>Referencia</th><th>Var.</th><th>Compra mín</th><th>Compra máx</th>
-            <th>Objetivo</th><th class="c">Señal</th><th class="l">Prioridad</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table></div></div>
-      </section>
+  <!-- ===== DESTACADOS / cómo funciona ===== -->
+  <section id="destacados" class="lp-section" style="background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius)">
+    <h2>Qué encuentras dentro</h2>
+    <p class="lead">Al iniciar sesión accedes a tu tablero privado.</p>
+    <div class="news-grid">
+      <div class="news-card" style="--accent:#1F3A5F"><div class="tag">Posiciones</div><h3>Valor y P&amp;L en vivo</h3><p>Tus posiciones con valor de mercado, ganancia/pérdida, peso y riesgo calculados al precio más reciente.</p></div>
+      <div class="news-card" style="--accent:#2E7D6F"><div class="tag">Watchlist</div><h3>Señales de compra</h3><p>Para cada instrumento, una señal automática según el precio frente a su promedio móvil y tus bandas por sector.</p></div>
+      <div class="news-card" style="--accent:#B7791F"><div class="tag">Dividendos</div><h3>Estimación neta</h3><p>Dividendos anualizados con la retención de EE.UU. y México ya consideradas.</p></div>
+    </div>
+  </section>
 
-      <!-- DIVIDENDOS -->
-      <section id="v-dividendos" class="view hidden">
-        <h2 class="section-title">Dividendos estimados (anualizados)</h2>
-        <div class="toolbar">
-          <div class="f sm"><label>Ret. EE.UU.</label><input id="s-us" type="number" step="0.01" /></div>
-          <div class="f sm"><label>Ret. México</label><input id="s-mx" type="number" step="0.01" /></div>
-          <div class="f sm" style="align-self:end"><button class="teal" id="btn-save-ret">Guardar tasas</button></div>
-          <div class="note" style="flex:1">Neto ≈ bruto × (1 − EE.UU. − México). Filas “verificar” = distribución variable por confirmar.</div>
-        </div>
-        <div class="table-card"><div class="table-scroll"><table id="t-div">
-          <thead><tr>
-            <th class="l">Ticker</th><th class="c">Plat.</th><th>Cantidad</th><th class="c">Paga</th>
-            <th class="c">Frecuencia</th><th>Div anual/acción</th><th>Bruto anual</th>
-            <th>Ret. EE.UU.</th><th>Ret. México</th><th>Neto anual</th><th class="l">Fuente</th>
-          </tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
+  <!-- ===== ACERCA ===== -->
+  <section id="acerca" class="lp-section">
+    <h2>Acerca</h2>
+    <p class="lead">Este es un panel personal de seguimiento de inversiones. La información de mercado es de carácter informativo y no constituye una recomendación de compra o venta.</p>
+  </section>
 
-      <!-- OPERACIONES -->
-      <section id="v-operaciones" class="view hidden">
-        <h2 class="section-title">Operaciones</h2>
-        <div class="toolbar" id="form-trade">
-          <div class="f sm"><label>Fecha</label><input id="tr-date" type="date" /></div>
-          <div class="f sm"><label>Operación</label><select id="tr-side"><option>COMPRA</option><option>VENTA</option></select></div>
-          <div class="f sm"><label>Plataforma</label><select id="tr-plat"><option>GBM</option><option>ARQ</option></select></div>
-          <div class="f sm"><label>Ticker</label><input id="tr-ticker" placeholder="KO" /></div>
-          <div class="f sm"><label>Cantidad</label><input id="tr-qty" type="number" step="0.000001" /></div>
-          <div class="f sm"><label>Precio</label><input id="tr-price" type="number" step="0.01" /></div>
-          <div class="f sm"><label>Comisión</label><input id="tr-comm" type="number" step="0.01" value="0" /></div>
-          <div class="f sm" style="align-self:end"><button id="btn-add-trade">Agregar</button></div>
-        </div>
-        <p id="trade-msg" class="msg"></p>
-        <div class="kpi-grid" id="ops-kpis" style="margin-bottom:18px"></div>
-        <div class="table-card"><div class="table-scroll"><table id="t-ops">
-          <thead><tr>
-            <th class="l">Fecha</th><th class="c">Operación</th><th class="c">Plat.</th><th class="l">Ticker</th>
-            <th>Cantidad</th><th>Precio</th><th>Comisión</th><th>Total</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table></div></div>
-      </section>
+  <!-- ===== CTA ===== -->
+  <section id="contacto" class="lp-section" style="scroll-margin-top:80px">
+    <div class="lp-cta-band">
+      <h2>¿Listo para revisar tu portafolio?</h2>
+      <p>Inicia sesión o crea tu cuenta para entrar a tu tablero.</p>
+      <a href="auth.html" class="btn-primary">Iniciar sesión / Registrarse</a>
+    </div>
+  </section>
 
-      <!-- EFECTIVO Y AJUSTES -->
-      <section id="v-efectivo" class="view hidden">
-        <h2 class="section-title">Efectivo y ajustes</h2>
-        <div class="panel" style="margin-bottom:18px">
-          <h3>Parámetros</h3>
-          <div class="form-grid">
-            <div class="f"><label>Tipo de cambio spot (USD/MXN)</label><input id="p-fx" type="number" step="0.0001" /></div>
-            <div class="f"><label>FX promedio de compra</label><input id="p-fxavg" type="number" step="0.0001" /></div>
-            <div class="f"><label>Efectivo disponible (USD)</label><input id="p-cash" type="number" step="0.01" /></div>
-            <div class="f"><label>Ventana promedio móvil (sesiones)</label><input id="p-ma" type="number" step="1" /></div>
-            <div class="f"><label>Límite de riesgo objetivo</label><input id="p-risk" type="number" step="0.01" /></div>
-          </div>
-          <div style="margin-top:14px"><button class="teal" id="btn-save-settings">Guardar parámetros</button> <span id="settings-msg" class="msg"></span></div>
-          <p class="note">El FX spot es el único tipo de cambio que convierte USD↔MXN en todo el tablero. La ventana del promedio móvil define la referencia automática de la watchlist.</p>
-        </div>
+  <!-- ===== FOOTER con redes ===== -->
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div>
+        <div class="f-brand">Portafolio<span class="dot">•</span></div>
+        <p>Panorama de mercado y seguimiento personal de inversiones.</p>
+      </div>
+      <!-- Reemplaza los href="#" por tus enlaces reales -->
+      <div class="social">
+        <a href="#" aria-label="X (Twitter)" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18.9 2H22l-7.3 8.3L23 22h-6.8l-5-6.5L5.4 22H2.3l7.8-8.9L1.6 2h6.9l4.5 6 5.9-6Zm-2.4 18h1.7L7.6 3.8H5.8L16.5 20Z"/></svg></a>
+        <a href="#" aria-label="Instagram" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 7.2A4.8 4.8 0 1 0 16.8 12 4.81 4.81 0 0 0 12 7.2Zm0 7.9A3.1 3.1 0 1 1 15.1 12 3.1 3.1 0 0 1 12 15.1Zm6.1-8.1a1.12 1.12 0 1 1-1.12-1.12A1.12 1.12 0 0 1 18.1 7ZM21.7 7a5.86 5.86 0 0 0-1.6-4.15A5.9 5.9 0 0 0 15.95 1.3C14.3 1.2 9.7 1.2 8.05 1.3A5.86 5.86 0 0 0 3.9 2.9 5.86 5.86 0 0 0 2.3 7.05C2.2 8.7 2.2 13.3 2.3 14.95A5.86 5.86 0 0 0 3.9 19.1a5.9 5.9 0 0 0 4.15 1.6c1.65.1 6.25.1 7.9 0a5.86 5.86 0 0 0 4.15-1.6 5.9 5.9 0 0 0 1.6-4.15c.1-1.65.1-6.24 0-7.95Zm-2.05 9.7a3.14 3.14 0 0 1-1.77 1.77c-1.22.49-4.13.37-5.48.37s-4.27.11-5.48-.37a3.14 3.14 0 0 1-1.77-1.77c-.49-1.22-.37-4.13-.37-5.48s-.11-4.27.37-5.48a3.14 3.14 0 0 1 1.77-1.77c1.22-.49 4.13-.37 5.48-.37s4.27-.11 5.48.37a3.14 3.14 0 0 1 1.77 1.77c.49 1.22.37 4.13.37 5.48s.12 4.27-.37 5.48Z"/></svg></a>
+        <a href="#" aria-label="LinkedIn" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M20.45 20.45h-3.56v-5.57c0-1.33 0-3.04-1.85-3.04s-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05a3.75 3.75 0 0 1 3.38-1.85c3.61 0 4.27 2.37 4.27 5.46ZM5.34 7.43a2.06 2.06 0 1 1 2.06-2.06 2.07 2.07 0 0 1-2.06 2.06ZM7.12 20.45H3.56V9h3.56ZM22.22 0H1.77A1.75 1.75 0 0 0 0 1.73v20.54A1.75 1.75 0 0 0 1.77 24h20.45A1.76 1.76 0 0 0 24 22.27V1.73A1.76 1.76 0 0 0 22.22 0Z"/></svg></a>
+        <a href="#" aria-label="YouTube" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6Z"/></svg></a>
+      </div>
+    </div>
+    <div class="lp-copy">© <span id="year"></span> Portafolio. Información de mercado con fines informativos; no es asesoría de inversión.</div>
+  </footer>
 
-        <div class="kpi-grid" id="cash-kpis"></div>
-
-        <div class="toolbar" id="form-cash">
-          <div class="f sm"><label>Fecha</label><input id="cf-date" type="date" /></div>
-          <div class="f sm"><label>Plataforma</label><select id="cf-plat"><option>GBM</option><option>ARQ</option></select></div>
-          <div class="f sm"><label>Concepto</label><select id="cf-kind"><option>Ingreso</option><option>Retiro</option></select></div>
-          <div class="f sm"><label>Monto (MXN)</label><input id="cf-amt" type="number" step="0.01" /></div>
-          <div class="f sm" style="align-self:end"><button id="btn-add-cash">Agregar movimiento</button></div>
-        </div>
-        <div class="table-card"><div class="table-scroll"><table id="t-cash">
-          <thead><tr><th class="l">Fecha</th><th class="c">Plataforma</th><th class="c">Concepto</th><th>Monto (MXN)</th></tr></thead>
-          <tbody></tbody>
-          <tfoot></tfoot>
-        </table></div></div>
-      </section>
-    </main>
-    <footer>Datos privados protegidos por Row Level Security · Precios y tipo de cambio actualizados automáticamente por el job programado.</footer>
-  </div>
-
-  <script src="app.js"></script>
+  <script src="config.js"></script>
+  <script src="landing.js"></script>
 </body>
 </html>
