@@ -20,13 +20,16 @@ const esc = (v) => (v == null ? '' : String(v).replace(/"/g, '&quot;'));
 
 /* ---------- sesión y rol ---------- */
 let userRole = 'viewer';
+let myUid = null;
 async function initSession() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.replace('auth.html'); return; }
+  myUid = session.user.id;
   $('m-email').textContent = session.user.email;
-  const { data: me } = await sb.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
+  const { data: me } = await sb.from('profiles').select('role').eq('id', myUid).maybeSingle();
   userRole = (me && me.role) ? me.role : 'viewer';
   applyRole(userRole);
+  if (userRole === 'admin') await setupClientSwitch();
   loadAll();
   subscribeRealtime();
 }
@@ -235,7 +238,7 @@ function renderDividendos(rows, S) {
 }
 $('btn-save-ret').onclick = async () => {
   const us = parseFloat($('s-us').value), mx = parseFloat($('s-mx').value);
-  const { error } = await sb.from('settings').update({ us_withholding: us, mx_withholding: mx }).eq('id', 1);
+  const { error } = await upsertSettings({ us_withholding: us, mx_withholding: mx });
   if (!error) loadAll();
 };
 
@@ -340,7 +343,7 @@ $('btn-save-settings').onclick = async () => {
     cash_usd: parseFloat($('p-cash').value), ma_window: parseInt($('p-ma').value, 10),
     risk_limit_pct: parseFloat($('p-risk').value),
   };
-  const { error } = await sb.from('settings').update(payload).eq('id', 1);
+  const { error } = await upsertSettings(payload);
   $('settings-msg').className = error ? 'msg err' : 'msg';
   $('settings-msg').textContent = error ? error.message : 'Parámetros guardados.';
   if (!error) loadAll();
@@ -546,3 +549,50 @@ function subscribeRealtime() {
 /* fecha de hoy por defecto */
 const today = new Date().toISOString().slice(0, 10);
 ['tr-date', 'cf-date'].forEach(id => { if ($(id)) $(id).value = today; });
+
+/* =========================================================================
+   ADMIN: cambiar entre clientes (ver/editar su portafolio)
+   ========================================================================= */
+async function setupClientSwitch() {
+  const sw = $('client-switch'); if (!sw) return;
+  sw.style.display = 'flex';
+  const sel = $('sel-client');
+  const { data: clientes } = await sb.from('v_clientes').select('*');
+  const list = clientes || [];
+  const opts = [`<option value="${myUid}">Yo — mi portafolio</option>`];
+  list.filter(c => c.id !== myUid)
+      .sort((a, b) => (a.nombre || a.email).localeCompare(b.nombre || b.email))
+      .forEach(c => opts.push(`<option value="${c.id}">${c.nombre || c.email}${c.role === 'admin' ? ' (admin)' : ''}</option>`));
+  sel.innerHTML = opts.join('');
+
+  // refleja el contexto actual guardado en el servidor
+  const { data: ctx } = await sb.from('admin_context').select('acting_user_id').maybeSingle();
+  const acting = (ctx && ctx.acting_user_id) ? ctx.acting_user_id : myUid;
+  sel.value = acting;
+  reflectActing(acting, list);
+
+  sel.onchange = async () => {
+    const id = sel.value;
+    if (id === myUid) await sb.rpc('clear_acting_user');
+    else await sb.rpc('set_acting_user', { p_user: id });
+    reflectActing(id, list);
+    loadAll();
+  };
+}
+function reflectActing(id, list) {
+  const b = $('acting-banner'); if (!b) return;
+  if (id && id !== myUid) {
+    const c = (list || []).find(x => x.id === id);
+    b.style.display = '';
+    b.textContent = 'Editando el portafolio de: ' + (c ? (c.nombre || c.email) : id);
+  } else {
+    b.style.display = 'none';
+  }
+}
+
+/* settings por-usuario: actualiza la fila del usuario activo, o la crea */
+async function upsertSettings(patch) {
+  const { data: cur } = await sb.from('settings').select('id').maybeSingle();
+  if (cur) return await sb.from('settings').update(patch).eq('id', cur.id);
+  return await sb.from('settings').insert(patch);   // user_id = effective_uid() por defecto
+}
