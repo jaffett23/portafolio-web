@@ -6,7 +6,7 @@
   <title>Mi portafolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -36,7 +36,7 @@
     </div>
 
     <main>
-      <div id="ro-note" class="alert-banner" style="display:none">Estás en modo <b>solo lectura</b>: puedes consultar todo, pero no editar. Pide a un administrador que te cambie el rol si necesitas editar.</div>
+      <div id="ro-note" class="alert-banner" style="display:none">Tu cuenta es de <b>cliente</b>: puedes agregar operaciones y consultar todo. La edición directa de las tablas (posiciones, watchlist, dividendos, operaciones) es solo para administradores.</div>
 
       <!-- RESUMEN -->
       <section id="v-resumen" class="view">
@@ -46,6 +46,11 @@
         <div class="panel-grid">
           <div class="panel"><h3>Exposición por sector</h3><div class="chart-box"><canvas id="chart-sector"></canvas></div></div>
           <div class="panel"><h3>Crecimiento vs. defensivo</h3><div class="chart-box"><canvas id="chart-bucket"></canvas></div></div>
+        </div>
+        <div style="height:18px"></div>
+        <div class="panel-grid">
+          <div class="panel"><h3>Peso por instrumento</h3><div class="chart-box"><canvas id="chart-weight"></canvas></div></div>
+          <div class="panel"><h3>G/P USD por instrumento</h3><div class="chart-box"><canvas id="chart-pnl"></canvas></div></div>
         </div>
       </section>
 
@@ -57,7 +62,7 @@
           <thead><tr>
             <th class="l">Ticker</th><th class="l">Nombre</th><th class="c">Tipo</th><th class="c">Plat.</th>
             <th class="l">Sector</th><th>Cantidad</th><th>Precio prom</th><th>Precio</th><th>Valor</th>
-            <th>G/P USD</th><th>G/P %</th><th>Peso</th><th>Stop</th><th>Riesgo USD</th><th class="c">Alerta</th>
+            <th>G/P USD</th><th>G/P %</th><th>Peso</th><th>Stop</th><th>Riesgo USD</th><th class="c">Alerta</th><th class="c">Acciones</th>
           </tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
@@ -68,11 +73,18 @@
       <section id="v-watchlist" class="view hidden">
         <h2 class="section-title">Lista de vigilancia</h2>
         <p class="section-sub">La señal se calcula sola: precio vs. promedio móvil y bandas por sector.</p>
+        <div class="toolbar" id="form-wl">
+          <div class="f sm"><label>Ticker</label><input id="wl-ticker" placeholder="KO" /></div>
+          <div class="f"><label>Prioridad</label><input id="wl-priority" placeholder="Alta / Media / Baja" /></div>
+          <div class="f"><label>Nota</label><input id="wl-note" /></div>
+          <div class="f sm" style="align-self:end"><button id="btn-add-wl" class="teal">Agregar a watchlist</button></div>
+        </div>
+        <p id="wl-msg" class="msg"></p>
         <div class="table-card"><div class="table-scroll"><table id="t-wl">
           <thead><tr>
             <th class="l">Ticker</th><th class="l">Nombre</th><th class="l">Sector</th><th class="c">En cartera</th>
             <th>Precio</th><th>Referencia</th><th>Var.</th><th>Compra mín</th><th>Compra máx</th>
-            <th>Objetivo</th><th class="c">Señal</th><th class="l">Prioridad</th>
+            <th>Objetivo</th><th class="c">Señal</th><th class="l">Prioridad</th><th class="c">Acciones</th>
           </tr></thead>
           <tbody></tbody>
         </table></div></div>
@@ -91,7 +103,7 @@
           <thead><tr>
             <th class="l">Ticker</th><th class="c">Plat.</th><th>Cantidad</th><th class="c">Paga</th>
             <th class="c">Frecuencia</th><th>Div anual/acción</th><th>Bruto anual</th>
-            <th>Ret. EE.UU.</th><th>Ret. México</th><th>Neto anual</th><th class="l">Fuente</th>
+            <th>Ret. EE.UU.</th><th>Ret. México</th><th>Neto anual</th><th class="l">Fuente</th><th class="c">Acciones</th>
           </tr></thead>
           <tbody></tbody>
           <tfoot></tfoot>
@@ -101,6 +113,7 @@
       <!-- OPERACIONES -->
       <section id="v-operaciones" class="view hidden">
         <h2 class="section-title">Operaciones</h2>
+        <p class="section-sub">Al registrar una compra o venta, tu posición se ajusta automáticamente. Si el ticker es nuevo, te pediremos sus datos para crearlo.</p>
         <div class="toolbar" id="form-trade">
           <div class="f sm"><label>Fecha</label><input id="tr-date" type="date" /></div>
           <div class="f sm"><label>Operación</label><select id="tr-side"><option>COMPRA</option><option>VENTA</option></select></div>
@@ -109,14 +122,26 @@
           <div class="f sm"><label>Cantidad</label><input id="tr-qty" type="number" step="0.000001" /></div>
           <div class="f sm"><label>Precio</label><input id="tr-price" type="number" step="0.01" /></div>
           <div class="f sm"><label>Comisión</label><input id="tr-comm" type="number" step="0.01" value="0" /></div>
-          <div class="f sm" style="align-self:end"><button id="btn-add-trade">Agregar</button></div>
+          <div class="f sm" style="align-self:end"><button id="btn-add-trade">Registrar</button></div>
         </div>
+
+        <div id="panel-nuevo-ticker" class="subpanel hidden">
+          <h4>Ticker nuevo: <span id="nt-ticker-label" class="num"></span></h4>
+          <p class="hint">Ese ticker no existe todavía. Completa sus datos para crearlo y registrar la operación.</p>
+          <div class="form-grid">
+            <div class="f"><label>Nombre</label><input id="nt-name" placeholder="Coca-Cola" /></div>
+            <div class="f"><label>Tipo</label><select id="nt-type"><option>Acción</option><option>ETF</option><option>Cripto / ETF spot</option><option>Fibra</option></select></div>
+            <div class="f"><label>Sector</label><input id="nt-sector" placeholder="Consumo básico" /></div>
+            <div class="f"><label>Estrategia</label><input id="nt-strategy" placeholder="Núcleo" /></div>
+          </div>
+        </div>
+
         <p id="trade-msg" class="msg"></p>
         <div class="kpi-grid" id="ops-kpis" style="margin-bottom:18px"></div>
         <div class="table-card"><div class="table-scroll"><table id="t-ops">
           <thead><tr>
             <th class="l">Fecha</th><th class="c">Operación</th><th class="c">Plat.</th><th class="l">Ticker</th>
-            <th>Cantidad</th><th>Precio</th><th>Comisión</th><th>Total</th>
+            <th>Cantidad</th><th>Precio</th><th>Comisión</th><th>Total</th><th class="c">Acciones</th>
           </tr></thead>
           <tbody></tbody>
         </table></div></div>
@@ -125,7 +150,7 @@
       <!-- EFECTIVO Y AJUSTES -->
       <section id="v-efectivo" class="view hidden">
         <h2 class="section-title">Efectivo y ajustes</h2>
-        <div class="panel" style="margin-bottom:18px">
+        <div class="panel" style="margin-bottom:18px" id="panel-settings">
           <h3>Parámetros</h3>
           <div class="form-grid">
             <div class="f"><label>Tipo de cambio spot (USD/MXN)</label><input id="p-fx" type="number" step="0.0001" /></div>
@@ -154,7 +179,20 @@
         </table></div></div>
       </section>
     </main>
-    <footer>Datos privados protegidos por Row Level Security · Precios y tipo de cambio actualizados automáticamente por el job programado.</footer>
+    <footer>Datos protegidos por Row Level Security · Cada cliente ve solo su portafolio · Precios y tipo de cambio actualizados por el job programado.</footer>
+  </div>
+
+  <!-- Modal de edición (solo admin) -->
+  <div id="editor" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="editor-title">Editar</h3>
+      <div id="editor-fields"></div>
+      <p id="editor-msg" class="msg"></p>
+      <div class="modal-actions">
+        <button class="ghost" id="editor-cancel">Cancelar</button>
+        <button class="teal" id="editor-save">Guardar</button>
+      </div>
+    </div>
   </div>
 
   <script src="config.js"></script>
