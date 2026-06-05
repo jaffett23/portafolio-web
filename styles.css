@@ -2,25 +2,25 @@
    Portafolio — estilos (minimalismo cálido, paleta heredada del Excel)
    ========================================================================= */
 :root{
-  --navy:#1F3A5F; --navy-deep:#15233A; --teal:#2E7D6F; --teal-soft:#3E9486;
-  --sand:#F3EDE2; --paper:#FBF7F0; --paper-2:#FFFFFF; --line:#E4DCCD;
-  --ink:#23303F; --muted:#7A776E;
-  --pos:#1B7F4B; --pos-bg:#E3F1E8;
-  --neg:#B23A48; --neg-bg:#F7E1E3;
-  --warn:#B7791F; --warn-bg:#FBEFD3;
-  --radius:14px; --radius-sm:9px;
-  --shadow:0 1px 2px rgba(31,58,95,.05), 0 8px 24px -12px rgba(31,58,95,.18);
-  --shadow-sm:0 1px 2px rgba(31,58,95,.06);
-  --serif:'Fraunces', Georgia, serif;
-  --sans:'Hanken Grotesk', system-ui, sans-serif;
+  /* Paleta profesional (banca / finanzas): azul marino, acero, gris frío */
+  --navy:#0A2540; --navy-deep:#06182E; --teal:#15467A; --teal-soft:#2D6CB0;
+  --sand:#EEF2F7; --paper:#F4F6FA; --paper-2:#FFFFFF; --line:#D7DFEA;
+  --ink:#15273B; --muted:#5B6B7C;
+  --pos:#15784B; --pos-bg:#E6F2EB;
+  --neg:#C0392B; --neg-bg:#FBEAE7;
+  --warn:#9A6A12; --warn-bg:#FBEFD3;
+  --radius:12px; --radius-sm:8px;
+  --shadow:0 1px 2px rgba(10,37,64,.06), 0 10px 28px -16px rgba(10,37,64,.28);
+  --shadow-sm:0 1px 2px rgba(10,37,64,.08);
+  --serif:'IBM Plex Serif', Georgia, serif;
+  --sans:'IBM Plex Sans', system-ui, sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   font-family:var(--sans); color:var(--ink); line-height:1.45;
   background:
-    radial-gradient(1200px 500px at 100% -10%, rgba(46,125,111,.07), transparent 60%),
-    radial-gradient(900px 500px at -10% 0%, rgba(31,58,95,.06), transparent 55%),
+    radial-gradient(1100px 460px at 100% -8%, rgba(10,37,64,.05), transparent 60%),
     var(--paper);
   min-height:100vh; -webkit-font-smoothing:antialiased;
 }
@@ -113,7 +113,7 @@ thead th.l{text-align:left} thead th.c{text-align:center}
 tbody td{padding:10px 12px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
 tbody td.l{text-align:left} tbody td.c{text-align:center}
 tbody tr:nth-child(even){background:var(--sand)}
-tbody tr:hover{background:#efe7d8}
+tbody tr:hover{background:#E7EDF5}
 tfoot td{padding:11px 12px; font-weight:700; background:var(--navy-deep); color:#fff; text-align:right; border:none}
 tfoot td:first-child{text-align:left}
 td .tk{font-weight:700; color:var(--navy-deep)}
@@ -124,7 +124,7 @@ td .tk{font-weight:700; color:var(--navy-deep)}
 .b-green{background:var(--pos-bg); color:var(--pos)}
 .b-amber{background:var(--warn-bg); color:var(--warn)}
 .b-red{background:var(--neg-bg); color:var(--neg)}
-.b-grey{background:#ECE7DC; color:var(--muted)}
+.b-grey{background:#E7ECF2; color:var(--muted)}
 .b-navy{background:#E1E8F1; color:var(--navy)}
 
 /* ---------- Forms / toolbar ---------- */
@@ -349,3 +349,40 @@ body.landing{background:
 .role-viewer{background:#E1E8F1; color:var(--navy)}
 .ghost-link{color:var(--navy); text-decoration:none; font-weight:600; font-size:.85rem; padding:7px 10px; border-radius:8px; transition:background .15s}
 .ghost-link:hover{background:var(--sand)}
+
+/* =========================================================================
+   COMPONENTES NUEVOS — edición admin, alta de operación, paneles
+   ========================================================================= */
+/* botones pequeños de acción en filas (solo admin) */
+.col-actions{white-space:nowrap}
+.btn-mini{font:inherit; font-weight:600; font-size:.78rem; cursor:pointer; border:1px solid var(--line);
+  background:var(--paper-2); color:var(--navy); border-radius:7px; padding:4px 9px; margin:0 2px; transition:background .12s,border-color .12s}
+.btn-mini:hover{background:var(--sand); border-color:var(--teal-soft)}
+.btn-mini.danger{color:var(--neg)} .btn-mini.danger:hover{background:var(--neg-bg); border-color:var(--neg)}
+
+/* panel de ticker nuevo dentro de Operaciones */
+.subpanel{background:var(--sand); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px 16px; margin:0 0 16px}
+.subpanel h4{margin:0 0 4px; font-family:var(--serif); font-weight:600; color:var(--navy-deep); font-size:1rem}
+.subpanel .hint{font-size:.82rem; color:var(--muted); margin:0 0 12px}
+
+/* modal de edición */
+.modal{position:fixed; inset:0; z-index:60; display:grid; place-items:center; padding:20px;
+  background:rgba(6,24,46,.45); backdrop-filter:blur(2px)}
+.modal.hidden{display:none}
+.modal-card{width:min(460px,94vw); max-height:88vh; overflow:auto; background:var(--paper-2);
+  border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 22px 18px}
+.modal-card h3{font-family:var(--serif); font-weight:600; color:var(--navy-deep); margin:0 0 14px; font-size:1.2rem}
+.modal-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:16px}
+.ed-row{margin-bottom:12px}
+.ed-row label{display:block; font-size:.74rem; font-weight:600; text-transform:uppercase; letter-spacing:.02em; color:var(--muted); margin-bottom:5px}
+
+/* =========================================================================
+   MODO CLIENTE: ocultar columna de acciones y el alta de watchlist
+   (la edición manual de tablas es exclusiva del administrador)
+   ========================================================================= */
+body.is-client #t-pos th:last-child, body.is-client #t-pos td:last-child,
+body.is-client #t-wl  th:last-child, body.is-client #t-wl  td:last-child,
+body.is-client #t-div th:last-child, body.is-client #t-div td:last-child,
+body.is-client #t-ops th:last-child, body.is-client #t-ops td:last-child{ display:none }
+body.is-client #form-wl{ display:none }
