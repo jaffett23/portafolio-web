@@ -41,6 +41,11 @@
       <!-- RESUMEN -->
       <section id="v-resumen" class="view">
         <h2 class="section-title">Resumen del portafolio</h2>
+        <div id="client-switch" style="display:none; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 16px">
+          <label style="margin:0; font-weight:700; color:var(--muted); text-transform:uppercase; font-size:.74rem; letter-spacing:.04em">Ver portafolio de</label>
+          <select id="sel-client" style="width:auto; max-width:340px"></select>
+          <span id="acting-banner" class="badge b-amber" style="display:none"></span>
+        </div>
         <div id="alertas"></div>
         <div class="kpi-grid" id="kpis"></div>
         <div class="panel-grid">
